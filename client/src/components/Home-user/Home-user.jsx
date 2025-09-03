@@ -1,23 +1,29 @@
 import './Home-user.css';
-import { useContext, useEffect } from "react";
+import { useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { AuthContext } from "../../context/AuthContext";
 
 export default function Home_user() {
   const { logout, user } = useContext(AuthContext);
   const navigate = useNavigate();
+  const [showLogoutMessage, setShowLogoutMessage] = useState(false);
 
   // Redirect al login se user è null
   useEffect(() => {
-    if (!user) navigate("/");
+    if (!user) navigate("/login");
   }, [user, navigate]);
 
   const handleLogout = () => {
     logout();
-    navigate("/"); // torna al login
+    setShowLogoutMessage(true);
+
+    // Nascondi messaggio dopo 2 secondi e torna al login
+    setTimeout(() => {
+      setShowLogoutMessage(false);
+      navigate("/login");
+    }, 2000);
   };
 
-  // Evita errori se user è ancora null
   if (!user) return null;
 
   return (
@@ -31,6 +37,12 @@ export default function Home_user() {
         >
           Logout
         </button>
+
+        {showLogoutMessage && (
+          <p className="mt-4 text-green-500 animate-fade">
+            Logout effettuato!
+          </p>
+        )}
       </div>
     </div>
   );

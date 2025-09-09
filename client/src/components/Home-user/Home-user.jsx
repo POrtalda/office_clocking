@@ -13,18 +13,15 @@ export default function Home_user() {
   const [uscita, setUscita] = useState(null);
   const [tempoTrascorso, setTempoTrascorso] = useState(null);
 
-  // Aggiorna orologio ogni secondo
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
 
-  // Redirect al login se user è null
   useEffect(() => {
     if (!user) navigate("/login");
   }, [user, navigate]);
 
-  // Sincronizza stato con eventuale record incompleto del giorno corrente
   useEffect(() => {
     if (!user) return;
     const dayKey = new Date().toLocaleDateString("it-IT");
@@ -55,7 +52,6 @@ export default function Home_user() {
     const stored = JSON.parse(localStorage.getItem("storico")) || {};
 
     if (!entrata) {
-      // Entrata
       setEntrata(now);
       setUscita(null);
       setTempoTrascorso(null);
@@ -70,11 +66,8 @@ export default function Home_user() {
       if (!stored[dayKey]) stored[dayKey] = [];
       stored[dayKey].push(newRecord);
       localStorage.setItem("storico", JSON.stringify(stored));
-
     } else if (!uscita) {
-      // Uscita
       setUscita(now);
-
       const diffMs = now - entrata;
       const diffSec = Math.floor(diffMs / 1000) % 60;
       const diffMin = Math.floor(diffMs / (1000 * 60)) % 60;
@@ -92,9 +85,7 @@ export default function Home_user() {
       }
       stored[dayKey] = dayRecords;
       localStorage.setItem("storico", JSON.stringify(stored));
-
     } else {
-      // Reset e nuova entrata
       setEntrata(now);
       setUscita(null);
       setTempoTrascorso(null);
@@ -114,49 +105,36 @@ export default function Home_user() {
   if (!user) return null;
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
-      <div className="bg-white p-8 rounded shadow-md w-full max-w-2xl text-center">
-        <h2 className="text-2xl font-bold mb-4">Benvenuto, {user.username}!</h2>
-        <p className="mb-6">Sei loggato come <strong>{user.role}</strong>.</p>
+    <div className="home-user-container">
+      <div className="home-user-box">
+        <h2 className="home-user-title">Benvenuto, {user.username}!</h2>
+        <p>Sei loggato come <strong>{user.role}</strong>.</p>
 
-        <div className="border p-4 rounded mb-4 bg-gray-50">
-          <h3 className="text-lg font-semibold">Orologio</h3>
-          <p className="text-xl font-mono">
-            {currentTime.toLocaleDateString("it-IT")} {currentTime.toLocaleTimeString("it-IT")}
-          </p>
+        <div className="home-user-clock">
+          <h3>Orologio</h3>
+          <p>{currentTime.toLocaleDateString("it-IT")} {currentTime.toLocaleTimeString("it-IT")}</p>
         </div>
 
-        <div className="border p-4 rounded mb-4 bg-pink-50">
-          <h3 className="text-lg font-semibold">Bollatura</h3>
+        <div className="home-user-stamp">
+          <h3>Bollatura</h3>
           <p>Entrata: {entrata ? entrata.toLocaleString("it-IT") : "Nessuna"}</p>
           <p>Uscita: {uscita ? uscita.toLocaleString("it-IT") : "Nessuna"}</p>
-          {tempoTrascorso && <p className="mt-2 text-green-600 font-semibold">Tempo trascorso: {tempoTrascorso}</p>}
+          {tempoTrascorso && <p className="tempo">{tempoTrascorso}</p>}
         </div>
 
-        <div className="flex flex-col gap-3 mb-6">
-          <button
-            onClick={handleStamp}
-            className="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600"
-          >
+        <div className="home-user-actions">
+          <button onClick={handleStamp} className="btn-primary">
             {entrata && !uscita ? "Bollatura Uscita" : "Bollatura Entrata"}
           </button>
-
-          <button
-            onClick={() => navigate("/storico")}
-            className="bg-green-500 text-white py-2 px-4 rounded hover:bg-green-600"
-          >
+          <button onClick={() => navigate("/storico")} className="btn-secondary">
             Vai allo Storico
           </button>
-
-          <button
-            onClick={handleLogout}
-            className="bg-red-500 text-white py-2 px-4 rounded hover:bg-red-600"
-          >
+          <button onClick={handleLogout} className="btn-danger">
             Logout
           </button>
         </div>
 
-        {showLogoutMessage && <p className="mt-4 text-green-500 animate-fade">Logout effettuato!</p>}
+        {showLogoutMessage && <p className="logout-msg">Logout effettuato!</p>}
       </div>
     </div>
   );

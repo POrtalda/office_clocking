@@ -50,7 +50,6 @@ export default function Home_admin() {
 
     setRecords(dayRecords);
 
-    // tempo totale
     let totalMs = 0;
     dayRecords.forEach(rec => {
       if (rec.entrata && rec.uscita) totalMs += new Date(rec.uscita) - new Date(rec.entrata);
@@ -74,36 +73,34 @@ export default function Home_admin() {
   if (!user) return null;
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 py-6">
-      <div className="bg-white p-6 rounded shadow-md w-full max-w-2xl text-center">
-        <h2 className="text-2xl font-bold mb-4">Benvenuto, {user.username}!</h2>
-        <p className="mb-6">Sei loggato come <strong>{user.role}</strong>.</p>
+    <div className="home-admin-container">
+      <div className="home-admin-box">
+        <h2 className="home-admin-title">Benvenuto, {user.username}!</h2>
+        <p>Sei loggato come <strong>{user.role}</strong>.</p>
 
-        <div className="border p-4 rounded mb-4 bg-green-50">
-          <h3 className="text-lg font-semibold mb-2">Seleziona un giorno</h3>
+        <div className="home-admin-calendar">
+          <h3>Seleziona un giorno</h3>
           <Calendar onChange={setSelectedDate} value={selectedDate} locale="it-IT" />
         </div>
 
-        <div className="border p-4 rounded mb-4 bg-blue-50">
-          <h3 className="text-lg font-semibold mb-2">Seleziona un utente</h3>
-          <select value={selectedUser} onChange={(e) => setSelectedUser(e.target.value)} className="border p-2 rounded w-full">
+        <div className="home-admin-select">
+          <h3>Seleziona un utente</h3>
+          <select value={selectedUser} onChange={(e) => setSelectedUser(e.target.value)}>
             <option value="">-- Seleziona utente --</option>
             {usersList.map(u => <option key={u.username} value={u.username}>{u.username}</option>)}
           </select>
         </div>
 
-        <div className="border p-4 rounded bg-orange-50 mb-6">
-          <h3 className="text-lg font-semibold mb-2">
-            Bollature di {selectedUser || "utente non selezionato"} il {selectedDate.toLocaleDateString("it-IT")}
-          </h3>
+        <div className="home-admin-records">
+          <h3>Bollature di {selectedUser || "utente non selezionato"} il {selectedDate.toLocaleDateString("it-IT")}</h3>
 
           {records.length > 0 ? (
             <>
-              <ul className="space-y-3 text-left mb-3">
+              <ul className="record-list">
                 {records.map((rec, i) => {
                   const incomplete = !rec.uscita;
                   return (
-                    <li key={i} className={`p-3 border rounded shadow-sm ${incomplete ? 'bg-red-100' : 'bg-white'}`}>
+                    <li key={i} className={`record-item ${incomplete ? 'incomplete' : ''}`}>
                       <p><strong>Bollatura #{i + 1}</strong></p>
                       <p>Entrata: {new Date(rec.entrata).toLocaleString("it-IT")}</p>
                       <p>Uscita: {rec.uscita ? new Date(rec.uscita).toLocaleString("it-IT") : "— Incompleta —"}</p>
@@ -112,13 +109,13 @@ export default function Home_admin() {
                   );
                 })}
               </ul>
-              <p className="text-lg font-semibold">Tempo totale lavorato: {totalTime}</p>
+              <p className="total-time">Tempo totale lavorato: {totalTime}</p>
             </>
-          ) : <p className="text-gray-500">{selectedUser ? "Nessuna bollatura registrata" : "Seleziona un utente"}</p>}
+          ) : <p className="no-records">{selectedUser ? "Nessuna bollatura registrata" : "Seleziona un utente"}</p>}
         </div>
 
-        <button onClick={handleLogout} className="bg-red-500 text-white py-2 px-4 rounded hover:bg-red-600">Logout</button>
-        {showLogoutMessage && <p className="mt-4 text-green-500 animate-fade">Logout effettuato!</p>}
+        <button onClick={handleLogout} className="btn-danger">Logout</button>
+        {showLogoutMessage && <p className="logout-msg">Logout effettuato!</p>}
       </div>
     </div>
   );

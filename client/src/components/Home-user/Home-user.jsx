@@ -28,7 +28,7 @@ export default function Home_user() {
     const stored = JSON.parse(localStorage.getItem("storico")) || {};
     const dayRecords = stored[dayKey] || [];
     const incompleteRecord = dayRecords
-      .filter(rec => rec.user === user.username && !rec.uscita)
+      .filter(rec => rec.user.toLowerCase() === user.username.toLowerCase() && !rec.uscita)
       .pop();
     if (incompleteRecord) {
       setEntrata(new Date(incompleteRecord.entrata));
@@ -77,7 +77,7 @@ export default function Home_user() {
 
       const dayRecords = stored[dayKey] || [];
       for (let i = dayRecords.length - 1; i >= 0; i--) {
-        if (dayRecords[i].user === user.username && !dayRecords[i].uscita) {
+        if (dayRecords[i].user.toLowerCase() === user.username.toLowerCase() && !dayRecords[i].uscita) {
           dayRecords[i].uscita = now.toISOString();
           dayRecords[i].tempo = diffFormatted;
           break;
@@ -129,8 +129,8 @@ export default function Home_user() {
           <button onClick={() => navigate("/storico")} className="btn-secondary">
             Vai allo Storico
           </button>
-          <button onClick={handleLogout} className="btn-danger">
-            Logout
+          <button onClick={handleLogout} className="btn-logout">
+            Logout <span className="logout-icon">⮕</span>
           </button>
         </div>
 

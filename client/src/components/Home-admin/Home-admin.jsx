@@ -47,22 +47,19 @@ export default function Home_admin() {
     yesterday.setDate(yesterday.getDate() - 1);
     const yesterdayKey = yesterday.toLocaleDateString("it-IT");
 
-    // Bollature entrata oggi
-    const entrateOggi = usersList.every(u => {
-      return stored[todayKey]?.some(r => r.user === u.username && r.entrata);
-    });
+    const entrateOggi = usersList.every(u =>
+      stored[todayKey]?.some(r => r.user.toLowerCase() === u.username.toLowerCase() && r.entrata)
+    );
     setEntrataOggiCompleta(entrateOggi);
 
-    // Bollature uscita ieri
-    const usciteIeri = usersList.every(u => {
-      return stored[yesterdayKey]?.some(r => r.user === u.username && r.uscita);
-    });
+    const usciteIeri = usersList.every(u =>
+      stored[yesterdayKey]?.some(r => r.user.toLowerCase() === u.username.toLowerCase() && r.uscita)
+    );
     setUscitaIeriCompleta(usciteIeri);
 
-    // Ritardi
     let status = "green";
     usersList.forEach(u => {
-      const rec = stored[todayKey]?.find(r => r.user === u.username && r.entrata);
+      const rec = stored[todayKey]?.find(r => r.user.toLowerCase() === u.username.toLowerCase() && r.entrata);
       if (rec) {
         const entrataTime = new Date(rec.entrata);
         const h = entrataTime.getHours();
@@ -79,7 +76,7 @@ export default function Home_admin() {
     const stored = JSON.parse(localStorage.getItem("storico")) || {};
     const todayKey = new Date().toLocaleDateString("it-IT");
     const mancanti = usersList
-      .filter(u => !stored[todayKey]?.some(r => r.user === u.username && r.entrata))
+      .filter(u => !stored[todayKey]?.some(r => r.user.toLowerCase() === u.username.toLowerCase() && r.entrata))
       .map(u => u.username);
     if (mancanti.length === 0) alert("Tutti i dipendenti hanno fatto entrata oggi!");
     else alert("Mancata entrata oggi:\n" + mancanti.join("\n"));
@@ -91,7 +88,7 @@ export default function Home_admin() {
 
     const ritardatari = usersList
       .map(u => {
-        const rec = stored[todayKey]?.find(r => r.user === u.username && r.entrata);
+        const rec = stored[todayKey]?.find(r => r.user.toLowerCase() === u.username.toLowerCase() && r.entrata);
         if (rec) {
           const entrataTime = new Date(rec.entrata);
           const h = entrataTime.getHours();
@@ -115,7 +112,7 @@ export default function Home_admin() {
     const yesterdayKey = yesterday.toLocaleDateString("it-IT");
 
     const mancanti = usersList
-      .filter(u => !stored[yesterdayKey]?.some(r => r.user === u.username && r.uscita))
+      .filter(u => !stored[yesterdayKey]?.some(r => r.user.toLowerCase() === u.username.toLowerCase() && r.uscita))
       .map(u => u.username);
     if (mancanti.length === 0) alert("Tutti i dipendenti hanno fatto uscita ieri!");
     else alert("Mancata uscita ieri:\n" + mancanti.join("\n"));
@@ -133,7 +130,7 @@ export default function Home_admin() {
     const dayKey = selectedDate.toLocaleDateString("it-IT");
 
     const dayRecords = (stored[dayKey] || [])
-      .filter(rec => rec.user === selectedUser)
+      .filter(rec => rec.user.toLowerCase() === selectedUser.toLowerCase())
       .sort((a, b) => new Date(a.entrata) - new Date(b.entrata));
 
     setRecords(dayRecords);
@@ -149,7 +146,6 @@ export default function Home_admin() {
     setTotalTime(`${totalHrs}h ${totalMin}m ${totalSec}s`);
   }, [selectedDate, selectedUser]);
 
-  // Logout
   const handleLogout = () => {
     logout();
     setShowLogoutMessage(true);
@@ -164,9 +160,8 @@ export default function Home_admin() {
   return (
     <div className="home-admin-container">
       <div className="home-admin-box">
-
         <h2 className="home-admin-title">Benvenuto, {user.username}!</h2>
-        
+
         {/* DASHBOARD */}
         {user.role === "admin" && (
           <div className="admin-dashboard">
@@ -223,7 +218,9 @@ export default function Home_admin() {
 
         {/* LOGOUT */}
         <div className="logout-container">
-          <button onClick={handleLogout} className="btn btn-red">Logout</button>
+          <button onClick={handleLogout} className="btn-logout">
+            Logout <span className="logout-icon">⮕</span>
+          </button>
           {showLogoutMessage && <p className="logout-msg">Logout effettuato!</p>}
         </div>
 

@@ -19,7 +19,8 @@ function App() {
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    const result = await login(username, password);
+    const normalizedUsername = username.trim().toLowerCase(); // <-- normalizzazione
+    const result = await login(normalizedUsername, password);
     if (result.success) {
       setError("");
       setUsername("");
@@ -50,9 +51,7 @@ function App() {
             className="login-input"
             required
           />
-          <button type="submit" className="login-button">
-            Login
-          </button>
+          <button type="submit" className="login-button">Login</button>
           {error && <p className="login-error">{error}</p>}
         </form>
       </div>

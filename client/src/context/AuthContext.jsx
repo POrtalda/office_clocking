@@ -1,11 +1,14 @@
-import { createContext, useState, useEffect } from "react";
+import { createContext, useState, useEffect, useContext } from "react";
 
 export const AuthContext = createContext();
+
+// Hook custom per usare AuthContext facilmente
+export const useAuth = () => useContext(AuthContext);
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
 
-  const login = async (username, password) => {
+  const login = async (usernameInput, passwordInput) => {
     try {
       const res = await fetch(
         "https://portalda.github.io/fake-api-office-clocking/list-users-office-clocking.json"
@@ -13,7 +16,9 @@ export const AuthProvider = ({ children }) => {
       const users = await res.json();
 
       const foundUser = users.find(
-        (u) => u.username === username && u.password === password
+        (u) =>
+          u.username.toLowerCase() === usernameInput.toLowerCase() &&
+          u.password === passwordInput
       );
 
       if (foundUser) {

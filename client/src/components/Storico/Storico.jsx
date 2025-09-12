@@ -21,7 +21,7 @@ export default function Storico() {
     const dayKey = selectedDate.toLocaleDateString("it-IT");
 
     const dayRecords = (stored[dayKey] || [])
-      .filter(rec => rec.user === user.username)
+      .filter(rec => rec.user.toLowerCase() === user.username.toLowerCase())
       .sort((a, b) => new Date(a.entrata) - new Date(b.entrata));
 
     setRecords(dayRecords);
@@ -61,8 +61,8 @@ export default function Storico() {
         </div>
 
         <div className="storico-actions">
-          <button onClick={() => navigate("/home-user")} className="btn-primary">
-            Torna alla Home
+          <button onClick={() => navigate("/home-user")} className="btn-logout">
+            Torna alla Home <span className="logout-icon">⮕</span>
           </button>
         </div>
       </div>

@@ -10,6 +10,7 @@ export default function AppRoutes() {
         <AuthProvider>
             <BrowserRouter>
                 <Routes>
+                    <Route path='/' element={<App />} />
                     <Route path='login' element={<App />} />
                     <Route path='home-user' element={<Home_user />} />
                     <Route path='home-admin' element={<Home_admin />} />

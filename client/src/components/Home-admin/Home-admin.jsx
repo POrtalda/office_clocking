@@ -39,7 +39,7 @@ export default function Home_admin() {
     fetchUsers();
   }, []);
 
-  // Calcolo dashboard
+  // Calcolo dashboard (escludendo admin)
   useEffect(() => {
     const stored = JSON.parse(localStorage.getItem("storico")) || {};
     const todayKey = new Date().toLocaleDateString("it-IT");
@@ -47,18 +47,21 @@ export default function Home_admin() {
     yesterday.setDate(yesterday.getDate() - 1);
     const yesterdayKey = yesterday.toLocaleDateString("it-IT");
 
-    const entrateOggi = usersList.every(u =>
+    // 👉 Filtra solo i non-admin
+    const employees = usersList.filter(u => u.role.toLowerCase() !== "admin");
+
+    const entrateOggi = employees.every(u =>
       stored[todayKey]?.some(r => r.user.toLowerCase() === u.username.toLowerCase() && r.entrata)
     );
     setEntrataOggiCompleta(entrateOggi);
 
-    const usciteIeri = usersList.every(u =>
+    const usciteIeri = employees.every(u =>
       stored[yesterdayKey]?.some(r => r.user.toLowerCase() === u.username.toLowerCase() && r.uscita)
     );
     setUscitaIeriCompleta(usciteIeri);
 
     let status = "green";
-    usersList.forEach(u => {
+    employees.forEach(u => {
       const rec = stored[todayKey]?.find(r => r.user.toLowerCase() === u.username.toLowerCase() && r.entrata);
       if (rec) {
         const entrataTime = new Date(rec.entrata);
@@ -75,9 +78,13 @@ export default function Home_admin() {
   const checkEntrataOggi = () => {
     const stored = JSON.parse(localStorage.getItem("storico")) || {};
     const todayKey = new Date().toLocaleDateString("it-IT");
-    const mancanti = usersList
+
+    const employees = usersList.filter(u => u.role.toLowerCase() !== "admin");
+
+    const mancanti = employees
       .filter(u => !stored[todayKey]?.some(r => r.user.toLowerCase() === u.username.toLowerCase() && r.entrata))
       .map(u => u.username);
+
     if (mancanti.length === 0) alert("Tutti i dipendenti hanno fatto entrata oggi!");
     else alert("Mancata entrata oggi:\n" + mancanti.join("\n"));
   };
@@ -86,7 +93,9 @@ export default function Home_admin() {
     const stored = JSON.parse(localStorage.getItem("storico")) || {};
     const todayKey = new Date().toLocaleDateString("it-IT");
 
-    const ritardatari = usersList
+    const employees = usersList.filter(u => u.role.toLowerCase() !== "admin");
+
+    const ritardatari = employees
       .map(u => {
         const rec = stored[todayKey]?.find(r => r.user.toLowerCase() === u.username.toLowerCase() && r.entrata);
         if (rec) {
@@ -111,9 +120,12 @@ export default function Home_admin() {
     yesterday.setDate(yesterday.getDate() - 1);
     const yesterdayKey = yesterday.toLocaleDateString("it-IT");
 
-    const mancanti = usersList
+    const employees = usersList.filter(u => u.role.toLowerCase() !== "admin");
+
+    const mancanti = employees
       .filter(u => !stored[yesterdayKey]?.some(r => r.user.toLowerCase() === u.username.toLowerCase() && r.uscita))
       .map(u => u.username);
+
     if (mancanti.length === 0) alert("Tutti i dipendenti hanno fatto uscita ieri!");
     else alert("Mancata uscita ieri:\n" + mancanti.join("\n"));
   };
@@ -189,23 +201,35 @@ export default function Home_admin() {
           <h3>Seleziona un utente</h3>
           <select value={selectedUser} onChange={(e) => setSelectedUser(e.target.value)}>
             <option value="">-- Seleziona utente --</option>
-            {usersList.map(u => <option key={u.username} value={u.username}>{u.username}</option>)}
+            {usersList
+              .filter(u => u.role.toLowerCase() !== "admin") // 👉 esclude admin
+              .map(u => (
+                <option key={u.username} value={u.username}>
+                  {u.username}
+                </option>
+              ))}
           </select>
         </div>
 
         {/* RECORD */}
         <div className="home-admin-records">
-          <h3>Bollature di {selectedUser || "utente non selezionato"} il {selectedDate.toLocaleDateString("it-IT")}</h3>
+          <h3>
+            Bollature di {selectedUser || "utente non selezionato"} il{" "}
+            {selectedDate.toLocaleDateString("it-IT")}
+          </h3>
           {records.length > 0 ? (
             <>
               <ul className="records-list">
                 {records.map((rec, i) => {
                   const incomplete = !rec.uscita;
                   return (
-                    <li key={i} className={`record-item ${incomplete ? 'record-incomplete' : ''}`}>
+                    <li key={i} className={`record-item ${incomplete ? "record-incomplete" : ""}`}>
                       <p><strong>Bollatura #{i + 1}</strong></p>
                       <p>Entrata: {new Date(rec.entrata).toLocaleString("it-IT")}</p>
-                      <p>Uscita: {rec.uscita ? new Date(rec.uscita).toLocaleString("it-IT") : "— Incompleta —"}</p>
+                      <p>
+                        Uscita:{" "}
+                        {rec.uscita ? new Date(rec.uscita).toLocaleString("it-IT") : "— Incompleta —"}
+                      </p>
                       <p>Tempo trascorso: {rec.tempo || "— Incompleta —"}</p>
                     </li>
                   );
@@ -213,7 +237,11 @@ export default function Home_admin() {
               </ul>
               <p className="total-time">Tempo totale lavorato: {totalTime}</p>
             </>
-          ) : <p className="no-data">{selectedUser ? "Nessuna bollatura registrata" : "Seleziona un utente"}</p>}
+          ) : (
+            <p className="no-data">
+              {selectedUser ? "Nessuna bollatura registrata" : "Seleziona un utente"}
+            </p>
+          )}
         </div>
 
         {/* LOGOUT */}
@@ -223,7 +251,6 @@ export default function Home_admin() {
           </button>
           {showLogoutMessage && <p className="logout-msg">Logout effettuato!</p>}
         </div>
-
       </div>
     </div>
   );

@@ -11,7 +11,6 @@ export default function Home_user() {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [entrata, setEntrata] = useState(null);
   const [uscita, setUscita] = useState(null);
-  const [tempoTrascorso, setTempoTrascorso] = useState(null);
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
@@ -22,6 +21,7 @@ export default function Home_user() {
     if (!user) navigate("/login");
   }, [user, navigate]);
 
+  // Recupero eventuale bollatura in corso
   useEffect(() => {
     if (!user) return;
     const dayKey = new Date().toLocaleDateString("it-IT");
@@ -33,7 +33,6 @@ export default function Home_user() {
     if (incompleteRecord) {
       setEntrata(new Date(incompleteRecord.entrata));
       setUscita(null);
-      setTempoTrascorso(null);
     }
   }, [user]);
 
@@ -46,15 +45,16 @@ export default function Home_user() {
     }, 2000);
   };
 
+  // Gestione bollatura
   const handleStamp = () => {
     const now = new Date();
     const dayKey = now.toLocaleDateString("it-IT");
     const stored = JSON.parse(localStorage.getItem("storico")) || {};
 
     if (!entrata) {
+      // Nuova entrata
       setEntrata(now);
       setUscita(null);
-      setTempoTrascorso(null);
 
       const newRecord = {
         entrata: now.toISOString(),
@@ -67,13 +67,13 @@ export default function Home_user() {
       stored[dayKey].push(newRecord);
       localStorage.setItem("storico", JSON.stringify(stored));
     } else if (!uscita) {
+      // Uscita
       setUscita(now);
       const diffMs = now - entrata;
       const diffSec = Math.floor(diffMs / 1000) % 60;
       const diffMin = Math.floor(diffMs / (1000 * 60)) % 60;
       const diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
       const diffFormatted = `${diffHrs}h ${diffMin}m ${diffSec}s`;
-      setTempoTrascorso(diffFormatted);
 
       const dayRecords = stored[dayKey] || [];
       for (let i = dayRecords.length - 1; i >= 0; i--) {
@@ -86,9 +86,9 @@ export default function Home_user() {
       stored[dayKey] = dayRecords;
       localStorage.setItem("storico", JSON.stringify(stored));
     } else {
+      // Nuovo ciclo entrata
       setEntrata(now);
       setUscita(null);
-      setTempoTrascorso(null);
 
       const newRecord = {
         entrata: now.toISOString(),
@@ -110,18 +110,13 @@ export default function Home_user() {
         <h2 className="home-user-title">Benvenuto, {user.username}!</h2>
         <p>Sei loggato come <strong>{user.role}</strong>.</p>
 
+        {/* OROLOGIO */}
         <div className="home-user-clock">
           <h3>Orologio</h3>
           <p>{currentTime.toLocaleDateString("it-IT")} {currentTime.toLocaleTimeString("it-IT")}</p>
         </div>
 
-        <div className="home-user-stamp">
-          <h3>Bollatura</h3>
-          <p>Entrata: {entrata ? entrata.toLocaleString("it-IT") : "Nessuna"}</p>
-          <p>Uscita: {uscita ? uscita.toLocaleString("it-IT") : "Nessuna"}</p>
-          {tempoTrascorso && <p className="tempo">{tempoTrascorso}</p>}
-        </div>
-
+        {/* SOLO PULSANTE BOLLATURA */}
         <div className="home-user-actions">
           <button onClick={handleStamp} className="btn-primary">
             {entrata && !uscita ? "Bollatura Uscita" : "Bollatura Entrata"}

@@ -4,21 +4,54 @@ import { useNavigate } from "react-router";
 import Calendar from "react-calendar";
 import { AuthContext } from "../../context/AuthContext";
 
+// Funzione per rilevare domenica / festività con messaggio
+function getHolidayMessage(date) {
+  const giorno = date.getDay(); // 0 = Domenica
+  if (giorno === 0) return "Buona domenica, ci vediamo domani!";
+
+  const giornoMese = date.getDate();
+  const mese = date.getMonth() + 1;
+
+  const holidays = {
+    "01-01": "Capodanno 🎉",
+    "06-01": "Epifania 👑",
+    "25-04": "Festa della Liberazione 🇮🇹",
+    "01-05": "Festa del Lavoro 👷",
+    "02-06": "Festa della Repubblica 🇮🇹",
+    "15-08": "Ferragosto ☀️",
+    "01-11": "Ognissanti ✝️",
+    "08-12": "Immacolata 🌸",
+    "25-12": "Natale 🎄",
+    "26-12": "Santo Stefano 🎁",
+  };
+
+  const key = `${String(giornoMese).padStart(2, "0")}-${String(mese).padStart(2, "0")}`;
+  if (holidays[key]) {
+    return `Oggi è ${holidays[key]}! Riposo garantito.`;
+  }
+  return null;
+}
+
 export default function Home_admin() {
   const { logout, user } = useContext(AuthContext);
   const navigate = useNavigate();
-  const [showLogoutMessage, setShowLogoutMessage] = useState(false);
 
+  const [showLogoutMessage, setShowLogoutMessage] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [selectedUser, setSelectedUser] = useState("");
   const [usersList, setUsersList] = useState([]);
   const [records, setRecords] = useState([]);
   const [totalTime, setTotalTime] = useState("0h 0m 0s");
 
-  // Dashboard
+  // Dashboard status states
   const [entrataOggiCompleta, setEntrataOggiCompleta] = useState(true);
   const [uscitaIeriCompleta, setUscitaIeriCompleta] = useState(true);
   const [ritardoStatus, setRitardoStatus] = useState("green");
+
+   const today = new Date();
+  // ❌ con questa (per simulare una domenica, es. 29 settembre 2024 che è domenica):
+  //const today = new Date("2024-09-29");
+  const holidayMessage = getHolidayMessage(today);
 
   useEffect(() => {
     if (!user) navigate("/login");
@@ -39,15 +72,18 @@ export default function Home_admin() {
     fetchUsers();
   }, []);
 
-  // Calcolo dashboard (escludendo admin)
+  // Calcolo dashboard (solo se non è giorno festivo/domenica)
   useEffect(() => {
+    if (holidayMessage) {
+      // non calcolo i dashboard, lascio valori default (o nascondo)
+      return;
+    }
     const stored = JSON.parse(localStorage.getItem("storico")) || {};
     const todayKey = new Date().toLocaleDateString("it-IT");
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
     const yesterdayKey = yesterday.toLocaleDateString("it-IT");
 
-    // 👉 Filtra solo i non-admin
     const employees = usersList.filter(u => u.role.toLowerCase() !== "admin");
 
     const entrateOggi = employees.every(u =>
@@ -72,13 +108,49 @@ export default function Home_admin() {
       }
     });
     setRitardoStatus(status);
-  }, [usersList]);
+  }, [usersList, holidayMessage]);
 
-  // Click dashboard
+  // Quando cambia utente o data, aggiorno record utente selezionato
+  useEffect(() => {
+    const stored = JSON.parse(localStorage.getItem("storico")) || {};
+    const dayKey = selectedDate.toLocaleDateString("it-IT");
+
+    const dayRecords = (stored[dayKey] || [])
+      .filter(rec => rec.user.toLowerCase() === selectedUser.toLowerCase())
+      .sort((a, b) => new Date(a.entrata) - new Date(b.entrata));
+
+    setRecords(dayRecords);
+
+    let totalMs = 0;
+    dayRecords.forEach(rec => {
+      if (rec.entrata && rec.uscita) {
+        totalMs += new Date(rec.uscita) - new Date(rec.entrata);
+      }
+    });
+
+    const totalSec = Math.floor(totalMs / 1000) % 60;
+    const totalMin = Math.floor(totalMs / (1000 * 60)) % 60;
+    const totalHrs = Math.floor(totalMs / (1000 * 60 * 60));
+    setTotalTime(`${totalHrs}h ${totalMin}m ${totalSec}s`);
+  }, [selectedDate, selectedUser]);
+
+  const handleLogout = () => {
+    logout();
+    setShowLogoutMessage(true);
+    setTimeout(() => {
+      setShowLogoutMessage(false);
+      navigate("/login");
+    }, 2000);
+  };
+
+  // Funzioni clic dashboard: se è giorno festivo, non faccio nulla o mostro alert
   const checkEntrataOggi = () => {
+    if (holidayMessage) {
+      alert(holidayMessage);
+      return;
+    }
     const stored = JSON.parse(localStorage.getItem("storico")) || {};
     const todayKey = new Date().toLocaleDateString("it-IT");
-
     const employees = usersList.filter(u => u.role.toLowerCase() !== "admin");
 
     const mancanti = employees
@@ -90,9 +162,12 @@ export default function Home_admin() {
   };
 
   const checkRitardi = () => {
+    if (holidayMessage) {
+      alert(holidayMessage);
+      return;
+    }
     const stored = JSON.parse(localStorage.getItem("storico")) || {};
     const todayKey = new Date().toLocaleDateString("it-IT");
-
     const employees = usersList.filter(u => u.role.toLowerCase() !== "admin");
 
     const ritardatari = employees
@@ -115,6 +190,10 @@ export default function Home_admin() {
   };
 
   const checkUscitaIeri = () => {
+    if (holidayMessage) {
+      alert(holidayMessage);
+      return;
+    }
     const stored = JSON.parse(localStorage.getItem("storico")) || {};
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
@@ -123,48 +202,11 @@ export default function Home_admin() {
     const employees = usersList.filter(u => u.role.toLowerCase() !== "admin");
 
     const mancanti = employees
-      .filter(u => !stored[yesterdayKey]?.some(r => r.user.toLowerCase() === u.username.toLowerCase() && r.uscita))
+      .filter(u => !stored[yesterdayKey]?.some(r => r.user.toLowercase === u.username.toLowerCase() && r.uscita))
       .map(u => u.username);
 
     if (mancanti.length === 0) alert("Tutti i dipendenti hanno fatto uscita ieri!");
     else alert("Mancata uscita ieri:\n" + mancanti.join("\n"));
-  };
-
-  // Record utente selezionato
-  useEffect(() => {
-    if (!selectedUser) {
-      setRecords([]);
-      setTotalTime("0h 0m 0s");
-      return;
-    }
-
-    const stored = JSON.parse(localStorage.getItem("storico")) || {};
-    const dayKey = selectedDate.toLocaleDateString("it-IT");
-
-    const dayRecords = (stored[dayKey] || [])
-      .filter(rec => rec.user.toLowerCase() === selectedUser.toLowerCase())
-      .sort((a, b) => new Date(a.entrata) - new Date(b.entrata));
-
-    setRecords(dayRecords);
-
-    let totalMs = 0;
-    dayRecords.forEach(rec => {
-      if (rec.entrata && rec.uscita) totalMs += new Date(rec.uscita) - new Date(rec.entrata);
-    });
-
-    const totalSec = Math.floor(totalMs / 1000) % 60;
-    const totalMin = Math.floor(totalMs / (1000 * 60)) % 60;
-    const totalHrs = Math.floor(totalMs / (1000 * 60 * 60));
-    setTotalTime(`${totalHrs}h ${totalMin}m ${totalSec}s`);
-  }, [selectedDate, selectedUser]);
-
-  const handleLogout = () => {
-    logout();
-    setShowLogoutMessage(true);
-    setTimeout(() => {
-      setShowLogoutMessage(false);
-      navigate("/login");
-    }, 2000);
   };
 
   if (!user) return null;
@@ -174,8 +216,13 @@ export default function Home_admin() {
       <div className="home-admin-box">
         <h2 className="home-admin-title">Benvenuto, {user.username}!</h2>
 
-        {/* DASHBOARD */}
-        {user.role === "admin" && (
+        {/* Se giorno festivo, mostro messaggio e salto la dashboard */}
+        {holidayMessage ? (
+          <div className="holiday-message-admin">
+            <h3>{holidayMessage}</h3>
+          </div>
+        ) : (
+          // Se non è giorno festivo → mostro dashboard controlli
           <div className="admin-dashboard">
             <div className="dashboard-card green" onClick={checkEntrataOggi}>
               Bollature Entrata Oggi
@@ -190,19 +237,19 @@ export default function Home_admin() {
           </div>
         )}
 
-        {/* CALENDARIO */}
+        {/* Calendario (rimane visibile anche nei festivi) */}
         <div className="home-admin-calendar centered">
           <h3>Seleziona un giorno</h3>
           <Calendar onChange={setSelectedDate} value={selectedDate} locale="it-IT" />
         </div>
 
-        {/* SELECT UTENTE */}
+        {/* Seleziona utente */}
         <div className="home-admin-select">
           <h3>Seleziona un utente</h3>
           <select value={selectedUser} onChange={(e) => setSelectedUser(e.target.value)}>
             <option value="">-- Seleziona utente --</option>
             {usersList
-              .filter(u => u.role.toLowerCase() !== "admin") // 👉 esclude admin
+              .filter(u => u.role.toLowerCase() !== "admin")
               .map(u => (
                 <option key={u.username} value={u.username}>
                   {u.username}
@@ -211,7 +258,7 @@ export default function Home_admin() {
           </select>
         </div>
 
-        {/* RECORD */}
+        {/* Records utente selezionato */}
         <div className="home-admin-records">
           <h3>
             Bollature di {selectedUser || "utente non selezionato"} il{" "}
@@ -244,7 +291,7 @@ export default function Home_admin() {
           )}
         </div>
 
-        {/* LOGOUT */}
+        {/* Logout */}
         <div className="logout-container">
           <button onClick={handleLogout} className="btn-logout">
             Logout <span className="logout-icon">⮕</span>

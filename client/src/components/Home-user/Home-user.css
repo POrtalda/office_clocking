@@ -35,9 +35,22 @@
 
 .home-user-actions {
   display: flex;
-  justify-content: center; /* centrati invece che space-around */
+  justify-content: center;
   margin-top: 20px;
-  gap: 20px; /* un po' più di spazio tra i bottoni */
+  gap: 20px;
+}
+
+/* Messaggio festivo/domenica */
+.holiday-message {
+  margin: 20px auto;
+  padding: 15px 20px;
+  background: #ffefd5;
+  border: 2px solid #f39c12;
+  border-radius: 12px;
+  font-weight: bold;
+  font-size: 18px;
+  color: #d35400;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
 }
 
 /* Bottone primario (bollatura entrata/uscita) */

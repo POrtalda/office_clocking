@@ -13,6 +13,7 @@
   box-shadow: 0 4px 10px rgba(0,0,0,0.15);
 }
 
+/* Dashboard cards */
 .admin-dashboard {
   display: flex;
   gap: 15px;
@@ -36,6 +37,7 @@
 
 .dashboard-card:hover { transform: translateY(-3px); }
 
+/* Traffic light indicators */
 .traffic-light {
   width: 15px;
   height: 15px;
@@ -47,15 +49,32 @@
 .traffic-light.yellow { background: yellow; }
 .traffic-light.red { background: red; }
 
+/* Calendario e filtri */
 .home-admin-calendar { margin-bottom: 20px; }
 .home-admin-select { margin-bottom: 20px; }
 
+/* Lista records */
 .records-list { list-style: none; padding: 0; }
 .record-item { padding: 10px; border-bottom: 1px solid #ddd; }
 .record-incomplete { background-color: #ffe6e6; }
 
 .total-time { font-weight: bold; margin-top: 10px; }
 
+/* Messaggio festivo/domenica */
+.holiday-message {
+  margin: 20px auto;
+  padding: 20px;
+  background: #eaf8ff;
+  border: 2px solid #3498db;
+  border-radius: 12px;
+  font-weight: bold;
+  font-size: 18px;
+  color: #21618c;
+  text-align: center;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+/* Logout */
 .logout-container {
   display: flex;
   justify-content: center;
